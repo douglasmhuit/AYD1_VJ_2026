@@ -215,7 +215,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment:
       name: production
-      url: http://${{ secrets.EC2_HOST }}
+      url: http://3.211.201.56
   
     steps:
       - name: Checkout codigo
