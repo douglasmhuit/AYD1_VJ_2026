@@ -116,143 +116,156 @@ jobs:
   # Condicion: SOLO se ejecuta cuando el push es a main.
   # Develop solo construye y publica imagenes, no despliega.
   # Depende de: build-and-push
-  deploy-simulated:
-    name: 3. Deploy Simulado (solo main)
-    runs-on: ubuntu-latest
-    needs: build-and-push
-    # Buena practica: el deploy a produccion solo ocurre desde main
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  # deploy-simulated:
+  #   name: 3. Deploy Simulado (solo main)
+  #   runs-on: ubuntu-latest
+  #   needs: build-and-push
+  #   # Buena practica: el deploy a produccion solo ocurre desde main
+  #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
-    steps:
-      - name: Checkout codigo
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout codigo
+  #       uses: actions/checkout@v4
 
-      # El archivo .env debe generarse ANTES de docker-compose pull
-      # para que Compose pueda resolver DOCKER_USERNAME y TAG correctamente
-      - name: Generar archivo .env para el despliegue
-        run: |
-          cat > .env << EOF
-          DB_USER=${{ secrets.DB_USER }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          DB_NAME=${{ secrets.DB_NAME }}
-          DB_TEST_NAME=${{ secrets.DB_TEST_NAME }}
-          PORT=${{ secrets.PORT }}
-          NODE_ENV=${{ secrets.NODE_ENV }}
-          REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }}
-          DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
-          TAG=${{ env.TAG }}
-          EOF
+  #     # El archivo .env debe generarse ANTES de docker compose pull
+  #     # para que Compose pueda resolver DOCKER_USERNAME y TAG correctamente
+  #     - name: Generar archivo .env para el despliegue
+  #       run: |
+  #         cat > .env << EOF
+  #         DB_USER=${{ secrets.DB_USER }}
+  #         DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+  #         DB_NAME=${{ secrets.DB_NAME }}
+  #         DB_TEST_NAME=${{ secrets.DB_TEST_NAME }}
+  #         PORT=${{ secrets.PORT }}
+  #         NODE_ENV=${{ secrets.NODE_ENV }}
+  #         REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }}
+  #         DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+  #         TAG=${{ env.TAG }}
+  #         EOF
 
-      - name: Descargar imagenes desde DockerHub
-        run: docker-compose pull
+  #     - name: Descargar imagenes desde DockerHub
+  #       run: docker compose pull
 
-      - name: Levantar servicios con docker-compose
-        run: docker-compose up -d
+  #     - name: Levantar servicios con docker compose
+  #       run: docker compose up -d
 
-      # Esperar activamente a que el backend este healthy
-      # en lugar de un sleep fijo, que puede ser muy corto o muy largo
-      - name: Esperar que el backend este saludable
-        run: |
-          echo "Esperando que el backend este listo..."
-          for i in {1..20}; do
-            STATUS=$(docker-compose ps backend | grep -o 'healthy' || echo 'not ready')
-            if [ "$STATUS" = "healthy" ]; then
-              echo "Backend saludable en el intento $i"
-              break
-            fi
-            echo "Intento $i/20 - estado: $STATUS"
-            sleep 5
-          done
+  #     # Esperar activamente a que el backend este healthy
+  #     # en lugar de un sleep fijo, que puede ser muy corto o muy largo
+  #     - name: Esperar que el backend este saludable
+  #       run: |
+  #         echo "Esperando que el backend este listo..."
+  #         for i in {1..20}; do
+  #           STATUS=$(docker compose ps backend | grep -o 'healthy' || echo 'not ready')
+  #           if [ "$STATUS" = "healthy" ]; then
+  #             echo "Backend saludable en el intento $i"
+  #             break
+  #           fi
+  #           echo "Intento $i/20 - estado: $STATUS"
+  #           sleep 5
+  #         done
 
-      - name: Verificar salud del Backend
-        run: |
-          if docker-compose exec -T backend curl -f -s http://localhost:3000/health; then
-            echo "Backend respondiendo correctamente"
-          else
-            echo "Backend no responde al healthcheck"
-            exit 1
-          fi
+  #     - name: Verificar salud del Backend
+  #       run: |
+  #         if docker compose exec -T backend curl -f -s http://localhost:3000/health; then
+  #           echo "Backend respondiendo correctamente"
+  #         else
+  #           echo "Backend no responde al healthcheck"
+  #           exit 1
+  #         fi
 
-      - name: Verificar salud del Frontend
-        run: |
-          if docker-compose exec -T frontend curl -f -s http://localhost:80/health; then
-            echo "Frontend respondiendo correctamente"
-          else
-            echo "Frontend no responde al healthcheck"
-          fi
+  #     - name: Verificar salud del Frontend
+  #       run: |
+  #         if docker compose exec -T frontend curl -f -s http://localhost:80/health; then
+  #           echo "Frontend respondiendo correctamente"
+  #         else
+  #           echo "Frontend no responde al healthcheck"
+  #         fi
 
-      - name: Probar endpoint de usuarios
-        run: |
-          echo "Creando usuario de prueba..."
-          docker-compose exec -T backend curl -s -X POST \
-            -H "Content-Type: application/json" \
-            -d '{"name":"Test User","email":"test@ci.com","age":25}' \
-            http://localhost:3000/api/users
+  #     - name: Probar endpoint de usuarios
+  #       run: |
+  #         echo "Creando usuario de prueba..."
+  #         docker compose exec -T backend curl -s -X POST \
+  #           -H "Content-Type: application/json" \
+  #           -d '{"name":"Test User","email":"test@ci.com","age":25}' \
+  #           http://localhost:3000/api/users
 
-          echo "Listando usuarios..."
-          docker-compose exec -T backend curl -s http://localhost:3000/api/users
+  #         echo "Listando usuarios..."
+  #         docker compose exec -T backend curl -s http://localhost:3000/api/users
 
-      - name: Resumen del despliegue
-        run: |
-          echo "Despliegue simulado completado"
-          echo "Backend : ${{ secrets.DOCKER_USERNAME }}/backend-app:${{ env.TAG }}"
-          echo "Frontend: ${{ secrets.DOCKER_USERNAME }}/frontend-app:${{ env.TAG }}"
+  #     - name: Resumen del despliegue
+  #       run: |
+  #         echo "Despliegue simulado completado"
+  #         echo "Backend : ${{ secrets.DOCKER_USERNAME }}/backend-app:${{ env.TAG }}"
+  #         echo "Frontend: ${{ secrets.DOCKER_USERNAME }}/frontend-app:${{ env.TAG }}"
 
-      # Limpieza siempre se ejecuta, incluso si pasos anteriores fallaron
-      - name: Limpiar entorno
-        if: always()
-        run: docker-compose down
+  #     # Limpieza siempre se ejecuta, incluso si pasos anteriores fallaron
+  #     - name: Limpiar entorno
+  #       if: always()
+  #       run: docker compose down
 
   # JOB 4: DEPLOY  EN AWS EC2 
   # Secrets adicionales necesarios:
   #   EC2_HOST       -> IP publica o Elastic IP de la instancia
   #   EC2_USERNAME   -> usuario SSH, normalmente "ubuntu" en Ubuntu AMIs
   #   EC2_SSH_KEY    -> clave privada PEM completa (cat my-key.pem)
-  # deploy-aws:
-  #   name: 4. Deploy a AWS EC2
-  #   runs-on: ubuntu-latest
-  #   needs: build-and-push
-  #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-  #   environment:
-  #     name: production
-  #     url: http://${{ secrets.EC2_HOST }}
-  #
-  #   steps:
-  #     - name: Checkout codigo
-  #       uses: actions/checkout@v4
-  #
-  #     - name: Generar archivo .env
-  #       run: |
-  #         cat > .env << EOF
-  #         DB_USER=${{ secrets.DB_USER }}
-  #         DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-  #         DB_NAME=${{ secrets.DB_NAME }}
-  #         PORT=${{ secrets.PORT }}
-  #         NODE_ENV=production
-  #         DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
-  #         TAG=${{ env.TAG }}
-  #         EOF
-  #
-  #     - name: Copiar archivos al servidor EC2
-  #       uses: appleboy/scp-action@v0.1.7
-  #       with:
-  #         host: ${{ secrets.EC2_HOST }}
-  #         username: ${{ secrets.EC2_USERNAME }}
-  #         key: ${{ secrets.EC2_SSH_KEY }}
-  #         source: ".,!node_modules,!**/node_modules"
-  #         target: "/home/${{ secrets.EC2_USERNAME }}/app"
-  #
-  #     - name: Desplegar en EC2 via SSH
-  #       uses: appleboy/ssh-action@v1.0.3
-  #       with:
-  #         host: ${{ secrets.EC2_HOST }}
-  #         username: ${{ secrets.EC2_USERNAME }}
-  #         key: ${{ secrets.EC2_SSH_KEY }}
-  #         script: |
-  #           cd /home/${{ secrets.EC2_USERNAME }}/app
-  #           docker-compose pull
-  #           docker-compose up -d --remove-orphans
-  #           docker system prune -f
+  deploy-aws:
+    name: 4. Deploy a AWS EC2
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: http://3.211.201.56
+  
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+  
+      - name: Generar archivo .env
+        run: |
+          cat > .env << EOF
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          PORT=${{ secrets.PORT }}
+          NODE_ENV=production
+          DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+          TAG=${{ env.TAG }}
+          EOF
+  
+      - name: Copiar archivos al servidor EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: ".,!node_modules,!**/node_modules"
+          target: "/home/${{ secrets.EC2_USERNAME }}/app"
+  
+      - name: Desplegar en EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/${{ secrets.EC2_USERNAME }}/app
+            # Iniciar sesion en DockerHub para bajar imagenes
+            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+            # Bajar las imagenes nuevas
+            docker compose pull
+
+            # Levantar contenedores y limpiar los anteriores
+            docker compose up -d --remove-orphans
+
+            # Limpiar imagenes viejas para no llenar el disco
+            docker image prune -f
+      - name: Verificar que la app este respondiendo
+        run: |
+          sleep 20
+          curl -f http://${{ secrets.EC2_HOST }}:3000/health || echo "Revisar manualmente en http://${{ secrets.EC2_HOST }}"      
+
 
   # JOB 5: REPORTE FINAL
   # Resume el estado de todos los jobs anteriores.
@@ -261,7 +274,7 @@ jobs:
   report:
     name: 5. Resumen Final
     runs-on: ubuntu-latest
-    needs: [test, build-and-push, deploy-simulated]
+    needs: [test, build-and-push, deploy-aws]
     if: always()
 
     steps:
@@ -287,9 +300,9 @@ jobs:
             echo "BUILD/PUSH : FALLO"
           fi
 
-          if [ "${{ needs.deploy-simulated.result }}" = "success" ]; then
+          if [ "${{ needs.deploy-aws.result }}" = "success" ]; then
             echo "DEPLOY     : OK"
-          elif [ "${{ needs.deploy-simulated.result }}" = "skipped" ]; then
+          elif [ "${{ needs.deploy-aws.result }}" = "skipped" ]; then
             echo "DEPLOY     : OMITIDO (solo corre en push a main)"
           else
             echo "DEPLOY     : FALLO"
