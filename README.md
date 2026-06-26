@@ -1,0 +1,2 @@
+# Ejemplo CI/CD con GitHub Actions
+Este repositorio contiene un ejemplo de cómo configurar un flujo de trabajo de CI/CD utilizando GitHub Actions. El objetivo es demostrar cómo automatizar el proceso de construcción, prueba y despliegue de una aplicación.
