@@ -144,10 +144,10 @@ jobs:
           EOF
 
       - name: Descargar imagenes desde DockerHub
-        run: docker-compose pull
+        run: docker compose pull
 
       - name: Levantar servicios con docker-compose
-        run: docker-compose up -d
+        run: docker compose up -d
 
       # Esperar activamente a que el backend este healthy
       # en lugar de un sleep fijo, que puede ser muy corto o muy largo
@@ -155,7 +155,7 @@ jobs:
         run: |
           echo "Esperando que el backend este listo..."
           for i in {1..20}; do
-            STATUS=$(docker-compose ps backend | grep -o 'healthy' || echo 'not ready')
+            STATUS=$(docker compose ps backend | grep -o 'healthy' || echo 'not ready')
             if [ "$STATUS" = "healthy" ]; then
               echo "Backend saludable en el intento $i"
               break
@@ -166,7 +166,7 @@ jobs:
 
       - name: Verificar salud del Backend
         run: |
-          if docker-compose exec -T backend curl -f -s http://localhost:3000/health; then
+          if docker compose exec -T backend curl -f -s http://localhost:3000/health; then
             echo "Backend respondiendo correctamente"
           else
             echo "Backend no responde al healthcheck"
@@ -175,7 +175,7 @@ jobs:
 
       - name: Verificar salud del Frontend
         run: |
-          if docker-compose exec -T frontend curl -f -s http://localhost:80/health; then
+          if docker compose exec -T frontend curl -f -s http://localhost:80/health; then
             echo "Frontend respondiendo correctamente"
           else
             echo "Frontend no responde al healthcheck"
@@ -184,13 +184,13 @@ jobs:
       - name: Probar endpoint de usuarios
         run: |
           echo "Creando usuario de prueba..."
-          docker-compose exec -T backend curl -s -X POST \
+          docker compose exec -T backend curl -s -X POST \
             -H "Content-Type: application/json" \
             -d '{"name":"Test User","email":"test@ci.com","age":25}' \
             http://localhost:3000/api/users
 
           echo "Listando usuarios..."
-          docker-compose exec -T backend curl -s http://localhost:3000/api/users
+          docker compose exec -T backend curl -s http://localhost:3000/api/users
 
       - name: Resumen del despliegue
         run: |
