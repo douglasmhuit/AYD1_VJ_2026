@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env*
+*.log
+.vscode/
+.idea/
+# Ignorar archivos de cobertura de pruebas  
+coverage/
+# Ignorar archivos de compilación
+build/
