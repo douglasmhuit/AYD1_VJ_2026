@@ -47,6 +47,11 @@ jobs:
       - name: Mostrar resumen de pruebas
         run: |
           echo "Pruebas ejecutadas. Reporte de cobertura disponible en coverage/"
+      
+      - name: Ejemplo laboratorio
+        run: |
+          echo "Este paso es solo un ejemplo de laboratorio"
+          echo "Se puede agregar cualquier comando adicional aquí"      
 
   # Construye las imagenes Docker del backend y frontend
   # y las sube a DockerHub con dos tags:
